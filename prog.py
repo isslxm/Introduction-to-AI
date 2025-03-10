@@ -7,14 +7,14 @@ num_groups = 4
 num_teachers = 4
 num_rooms = 4
 num_days = 5
-max_classes_per_day = 3
+max_classes_per_day = 4
 
 # Предметы и их количество занятий в неделю
 subjects = {
     "Manas Telling": 1,
     "Advanced Python": 2,
-    "English": 5,
-    "Data Structures": 3,
+    "English": 4,
+    "Data Structures": 4,
     "Introduction to AI": 2,
     "History": 1,
     "Geography": 1
@@ -23,7 +23,6 @@ subject_list = list(subjects.keys())
 num_subjects = len(subject_list)
 
 # Генерация начального расписания
-
 def generate_schedule():
     schedule = np.full((num_days, num_groups, max_classes_per_day), -1, dtype=int)
     
@@ -72,83 +71,93 @@ def fitness(schedule):
                     teacher = subject_index % num_teachers
                     room = subject_index % num_rooms
                     if teacher in teachers or room in rooms:
-                        penalty += 1
+                        penalty += 10
                     teachers.add(teacher)
                     rooms.add(room)
     
     return penalty
-
-# PSO алгоритм
-def pso(num_particles, max_iter):
-    particles = [generate_schedule() for _ in range(num_particles)]
-    velocities = [np.zeros_like(particles[0]) for _ in range(num_particles)]
-    personal_best = [p.copy() for p in particles]
-    global_best = min(personal_best, key=fitness)
-    
-    for iteration in range(max_iter):
-        for i in range(num_particles):
-            velocities[i] = velocities[i] * 0.5 + random.random() * (personal_best[i] - particles[i]) + random.random() * (global_best - particles[i])
-            particles[i] = np.clip(particles[i] + velocities[i], 0, num_subjects - 1).astype(int)
-            
-            if fitness(particles[i]) < fitness(personal_best[i]):
-                personal_best[i] = particles[i].copy()
-            if fitness(personal_best[i]) < fitness(global_best):
-                global_best = personal_best[i].copy()
-        print(f"Iteration {iteration}, Best Fitness: {fitness(global_best)}")
-    
-    return global_best
-
-# Вывод расписания
-def print_schedule(schedule):
-    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-    print("\nBest Schedule:")
-    for day in range(num_days):
-        print(f"\n{days[day]}:")
-        print("Group\tClass 1\t  Class 2\t  Class 3")
-        print("-" * 40)
-        for group in range(num_groups):
-            print(f"Group {group + 1}:", end="\t")
-            for class_num in range(max_classes_per_day):
-                subject_index = schedule[day, group, class_num]
-                subject_name = subject_list[subject_index]
-                print(f"{subject_name}", end="\t")
-            print()
-        print("-" * 40)
-
-# Запуск PSO
-best_schedule = pso(num_particles=30, max_iter=100)
-print_schedule(best_schedule)
-
 
 # Глобальная переменная для хранения истории fitness
 fitness_history = []
 
 def pso(num_particles, max_iter):
     global fitness_history
+    fitness_history = []  # Reset history at the start
+    
+    # Initialize particles
     particles = [generate_schedule() for _ in range(num_particles)]
     velocities = [np.zeros_like(particles[0]) for _ in range(num_particles)]
     personal_best = [p.copy() for p in particles]
-    global_best = min(personal_best, key=fitness)
+    personal_best_fitness = [fitness(p) for p in personal_best]
+    
+    # Find global best
+    best_idx = np.argmin(personal_best_fitness)
+    global_best = personal_best[best_idx].copy()
+    global_best_fitness = personal_best_fitness[best_idx]
+    
+    # PSO parameters
+    w = 0.5  # Inertia weight
+    c1 = 1.5  # Cognitive coefficient
+    c2 = 1.5  # Social coefficient
     
     for iteration in range(max_iter):
         for i in range(num_particles):
-            velocities[i] = velocities[i] * 0.5 + random.random() * (personal_best[i] - particles[i]) + random.random() * (global_best - particles[i])
-            particles[i] = np.clip(particles[i] + velocities[i], 0, num_subjects - 1).astype(int)
+            # Update velocity
+            r1, r2 = random.random(), random.random()
             
-            if fitness(particles[i]) < fitness(personal_best[i]):
+            # Element-wise operations on the arrays
+            cognitive = c1 * r1 * (personal_best[i] - particles[i])
+            social = c2 * r2 * (global_best - particles[i])
+            
+            velocities[i] = w * velocities[i] + cognitive + social
+            
+            # Update particle positions
+            new_particle = particles[i] + np.round(velocities[i]).astype(int)
+            
+            # Ensure new particle has valid subject indices
+            new_particle = np.clip(new_particle, -1, num_subjects - 1).astype(int)
+            particles[i] = new_particle
+            
+            # Update personal best
+            current_fitness = fitness(particles[i])
+            if current_fitness < personal_best_fitness[i]:
                 personal_best[i] = particles[i].copy()
-            if fitness(personal_best[i]) < fitness(global_best):
-                global_best = personal_best[i].copy()
+                personal_best_fitness[i] = current_fitness
+                
+                # Update global best if needed
+                if current_fitness < global_best_fitness:
+                    global_best = particles[i].copy()
+                    global_best_fitness = current_fitness
         
-        # Сохраняем текущее значение fitness для графика
-        best_fitness = fitness(global_best)
-        fitness_history.append(best_fitness)
-        print(f"Iteration {iteration}, Best Fitness: {best_fitness}")
+        # Record fitness history
+        fitness_history.append(global_best_fitness)
+        print(f"Iteration {iteration}, Best Fitness: {global_best_fitness}")
     
     return global_best
 
-# Запуск PSO
-best_schedule = pso(num_particles=30, max_iter=100)
+# Функция для вывода расписания
+def print_schedule(schedule):
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    print("\nBest Schedule:")
+    for day in range(num_days):
+        print(f"\n{days[day]}:")
+        print("Group\tClass 1\t\tClass 2\t\tClass 3\t\tClass 4")
+        print("-" * 60)
+        for group in range(num_groups):
+            print(f"Group {group + 1}:", end="\t")
+            for class_num in range(max_classes_per_day):
+                subject_index = schedule[day, group, class_num]
+                if subject_index != -1:
+                    subject_name = subject_list[subject_index]
+                    print(f"{subject_name:<15}", end="\t")
+                else:
+                    print("None\t\t", end="")
+            print()
+        print("-" * 60)
+
+# Запуск PSO с меньшим количеством итераций для быстрой проверки
+best_schedule = pso(num_particles=50, max_iter=100)
+print_schedule(best_schedule)
 
 # Построение графика
 plt.figure(figsize=(10, 5))
