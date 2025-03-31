@@ -9,7 +9,9 @@ from sklearn.datasets import fetch_california_housing
 
 # Загрузка данных
 california = fetch_california_housing()
+print(california)
 df = pd.DataFrame(california.data, columns=california.feature_names)
+print(df.head)
 df['PRICE'] = california.target * 100000  # Переводим в доллары для наглядности
 
 # Подготовка данных
@@ -40,6 +42,7 @@ y_pred = model.predict(X_test_scaled)
 mse = mean_squared_error(y_test, y_pred)
 r2 = r2_score(y_test, y_pred)
 accuracy = 100 * (1 - np.mean(np.abs((y_test - y_pred) / y_test)))
+
 
 # Создаем улучшенный наглядный график
 plt.figure(figsize=(12, 7))
@@ -84,9 +87,3 @@ print(f"Coefficient (R^2): {r2:.4f}")
 print(f"Mean squared error (MSE): {mse:.2f}")
 print(f"Accuracy: {accuracy:.2f}%")
 print(f"Model intercept: {model.intercept_:.2f}")
-
-# # Сравнение с исходной моделью
-# print("\nСравнение с исходной моделью:")
-# print("Исходная модель - линейная регрессия на обычных признаках")
-# print("Улучшенная модель - линейная регрессия на полиномиальных признаках с масштабированием")
-# print(f"Повышение точности: значительное увеличение R^2 и снижение MSE")
