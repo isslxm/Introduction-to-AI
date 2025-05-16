@@ -89,14 +89,14 @@ class MonsterHuntEnv(gym.Env):
                         self.grid[my, mx] = 0
             self.monsters = [m for m in self.monsters if m["health"] > 0]
             if attacked:
-                reward += 100
+                reward += 150
 
         elif action == 5:
             if self.agent_pos == self.sword_pos:
                 self.has_sword = True
                 self.sword_pos = [-1, -1]
                 print("Sword picked up!")
-                reward += 3
+                reward += 100
 
         elif action == 6:
             reward += 0.2
@@ -107,7 +107,7 @@ class MonsterHuntEnv(gym.Env):
             if abs(my - ay) + abs(mx - ax) == 1:
                 self.agent_health -= 1
                 print(f"Monster attacks! Agent loses 1 HP ({self.agent_health} left).")
-                reward -= 50
+                reward -= 80
 
         # Обновление сетки
         self.grid = np.zeros((self.grid_size, self.grid_size), dtype=int)
@@ -144,9 +144,9 @@ class MonsterHuntEnv(gym.Env):
             self.window = pygame.display.set_mode((self.window_size, self.window_size))
             self.font = pygame.font.Font(None, 24)
             if self.agent_img is None:
-                self.agent_img = pygame.image.load("./game/assets/knight.png").convert_alpha()
-                self.sword_img = pygame.image.load("./game/assets/sword.png").convert_alpha()
-                self.monster_img = pygame.image.load("./game/assets/monster.png").convert_alpha()
+                self.agent_img = pygame.image.load("assets/knight2.png").convert_alpha()
+                self.sword_img = pygame.image.load("assets/sword.png").convert_alpha()
+                self.monster_img = pygame.image.load("assets/monster3.png").convert_alpha()
 
         self.window.fill((30, 30, 30))
 
