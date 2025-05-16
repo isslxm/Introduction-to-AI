@@ -30,40 +30,40 @@ clock = pygame.time.Clock()
 
 # print("Управление: WASD — движение, J — атака, K — подобрать меч, L — ждать")
 
-while running:
-    env.render()
+# while running:
+#     env.render()
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+#     for event in pygame.event.get():
+#         if event.type == pygame.QUIT:
+#             running = False
 
-    keys = pygame.key.get_pressed()
-    action = None
+#     keys = pygame.key.get_pressed()
+#     action = None
 
-    if keys[pygame.K_w]:
-        action = 0
-    elif keys[pygame.K_s]:
-        action = 1
-    elif keys[pygame.K_a]:
-        action = 2
-    elif keys[pygame.K_d]:
-        action = 3
-    elif keys[pygame.K_j]:
-        action = 4
-    elif keys[pygame.K_k]:
-        action = 5
-    elif keys[pygame.K_l]:
-        action = 6
+#     if keys[pygame.K_w]:
+#         action = 0
+#     elif keys[pygame.K_s]:
+#         action = 1
+#     elif keys[pygame.K_a]:
+#         action = 2
+#     elif keys[pygame.K_d]:
+#         action = 3
+#     elif keys[pygame.K_j]:
+#         action = 4
+#     elif keys[pygame.K_k]:
+#         action = 5
+#     elif keys[pygame.K_l]:
+#         action = 6
 
-    if action is not None:
-        obs, reward, terminated, truncated, info = env.step(action)
-        print(f"Action: {action}, Reward: {reward}")
+#     if action is not None:
+#         obs, reward, terminated, truncated, info = env.step(action)
+#         print(f"Action: {action}, Reward: {reward}")
 
-        if terminated:
-            print("Game Over!")
-            time.sleep(3)
-            obs, info = env.reset()
+#         if terminated:
+#             print("Game Over!")
+#             time.sleep(3)
+#             obs, info = env.reset()
 
-    clock.tick(10)
+#     clock.tick(10)
 
-pygame.quit()
+# pygame.quit()

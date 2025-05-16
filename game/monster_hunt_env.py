@@ -38,7 +38,7 @@ class MonsterHuntEnv(gym.Env):
 
         self.grid = np.zeros((self.grid_size, self.grid_size), dtype=int)
         self.agent_pos = [0, 0]
-        self.agent_health = 20
+        self.agent_health = 10
         self.agent_damage = 2
         self.has_sword = False
 
@@ -89,14 +89,16 @@ class MonsterHuntEnv(gym.Env):
                         self.grid[my, mx] = 0
             self.monsters = [m for m in self.monsters if m["health"] > 0]
             if attacked:
-                reward += 150
+                reward += 20
+                if self.has_sword:
+                    reward += 100
 
         elif action == 5:
-            if self.agent_pos == self.sword_pos:
+            if self.agent_pos == self.sword_pos and not self.has_sword:
+                reward += 50
                 self.has_sword = True
                 self.sword_pos = [-1, -1]
                 print("Sword picked up!")
-                reward += 100
 
         elif action == 6:
             reward += 0.2
@@ -107,7 +109,7 @@ class MonsterHuntEnv(gym.Env):
             if abs(my - ay) + abs(mx - ax) == 1:
                 self.agent_health -= 1
                 print(f"Monster attacks! Agent loses 1 HP ({self.agent_health} left).")
-                reward -= 80
+                reward -= 30
 
         # Обновление сетки
         self.grid = np.zeros((self.grid_size, self.grid_size), dtype=int)
@@ -123,12 +125,12 @@ class MonsterHuntEnv(gym.Env):
         # Проверка конца игры
         if self.agent_health <= 0:
             print("Agent died!")
-            reward -= 10
+            reward -= 100
             done = True
             terminated = True
         elif len(self.monsters) == 0:
             print("All the monsters are defeated!")
-            reward += 10
+            reward += 200
             done = True
             terminated = True
 
