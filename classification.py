@@ -31,3 +31,24 @@ print(classification_report(y_test, y_pred, zero_division=0))
 # Вывод матрицы ошибок
 print("Confusion matrix:")
 print(confusion_matrix(y_test, y_pred))
+
+import joblib
+# Сохранение модели
+joblib.dump(clf, 'diabetes_model.pkl')
+
+
+# Загрузка модели
+clf_loaded = joblib.load('diabetes_model.pkl')
+print("Model downloaded.")
+
+samples = np.array([
+    [70, 80],  # скорее всего нет риска
+    [85, 90],  # скорее всего есть риск
+    [60, 60],  # нет риска
+    [95, 88],  # риск
+])
+
+predictions = clf_loaded.predict(samples)
+for i, pred in enumerate(predictions):
+    print(f"Patient {i+1}: {'Risk' if pred else 'No risk'}")
+
