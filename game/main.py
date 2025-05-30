@@ -32,14 +32,14 @@ clock = pygame.time.Clock()
 
 # while running:
 #     env.render()
-
+#
 #     for event in pygame.event.get():
 #         if event.type == pygame.QUIT:
 #             running = False
-
+#
 #     keys = pygame.key.get_pressed()
 #     action = None
-
+#
 #     if keys[pygame.K_w]:
 #         action = 0
 #     elif keys[pygame.K_s]:
@@ -54,16 +54,16 @@ clock = pygame.time.Clock()
 #         action = 5
 #     elif keys[pygame.K_l]:
 #         action = 6
-
+#
 #     if action is not None:
 #         obs, reward, terminated, truncated, info = env.step(action)
 #         print(f"Action: {action}, Reward: {reward}")
-
+#
 #         if terminated:
 #             print("Game Over!")
 #             time.sleep(3)
 #             obs, info = env.reset()
-
+#
 #     clock.tick(10)
-
+#
 # pygame.quit()

@@ -16,7 +16,7 @@ class MonsterHuntEnv(gym.Env):
         self.font = None
 
         self.action_space = spaces.Discrete(7)
-        self.observation_space = spaces.Box(low=0, high=3, shape=(25,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=0, high=3, shape=(28,), dtype=np.float32)
 
         self.agent_img = None
         self.sword_img = None
@@ -29,7 +29,13 @@ class MonsterHuntEnv(gym.Env):
                 return x, y
 
     def _get_obs(self):
-        return self.grid.flatten().astype(np.float32)
+        base_grid = self.grid.flatten()
+        additional_info = np.array([
+            self.agent_health / 10.0,
+            1.0 if self.has_sword else 0.0,
+            *[m["health"] / 5.0 for m in self.monsters]
+        ])
+        return np.concatenate([base_grid, additional_info]).astype(np.float32)
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -43,11 +49,11 @@ class MonsterHuntEnv(gym.Env):
         self.has_sword = False
 
         x, y = self._get_random_free_call()
-        self.grid[y, x] = 1
-        self.sword_pos = [y, x]
+        self.grid[2, 2] = 1
+        self.sword_pos = [2, 2]
 
         self.monsters = []
-        for _ in range(3):
+        for _ in range(2):
             x, y = self._get_random_free_call()
             self.grid[y, x] = 2
             self.monsters.append({"pos": [y, x], "health": 5})
@@ -63,17 +69,28 @@ class MonsterHuntEnv(gym.Env):
         terminated = False
         truncated = False
         info = {}
+        prev_distance_to_sword = abs(self.agent_pos[0] - self.sword_pos[0]) + abs(self.agent_pos[1] - self.sword_pos[1])
 
         y, x = self.agent_pos
 
-        if action == 0 and y > 0:
-            self.agent_pos[0] -= 1
-        elif action == 1 and y < self.grid_size - 1:
-            self.agent_pos[0] += 1
-        elif action == 2 and x > 0:
-            self.agent_pos[1] -= 1
-        elif action == 3 and x < self.grid_size - 1:
-            self.agent_pos[1] += 1
+        if action in [0, 1, 2, 3]:
+            new_y, new_x = self.agent_pos
+            if action == 0 and new_y > 0:
+                new_y -= 1
+            elif action == 1 and new_y < self.grid_size - 1:
+                new_y += 1
+            elif action == 2 and new_x > 0:
+                new_x -= 1
+            elif action == 3 and new_x < self.grid_size - 1:
+                new_x += 1
+
+            # Штраф за шаг, если не приближается к мечу или монстрам
+            new_distance_to_sword = abs(new_y - self.sword_pos[0]) + abs(new_x - self.sword_pos[1])
+            if new_distance_to_sword >= prev_distance_to_sword:
+                reward -= 1
+
+            self.agent_pos = [new_y, new_x]
+
         elif action == 4:
             attacked = False
             for monster in self.monsters:
@@ -89,19 +106,20 @@ class MonsterHuntEnv(gym.Env):
                         self.grid[my, mx] = 0
             self.monsters = [m for m in self.monsters if m["health"] > 0]
             if attacked:
-                reward += 20
                 if self.has_sword:
-                    reward += 100
+                    reward += 200
+                else:
+                    reward -= 50
 
         elif action == 5:
             if self.agent_pos == self.sword_pos and not self.has_sword:
-                reward += 50
+                reward += 300
                 self.has_sword = True
                 self.sword_pos = [-1, -1]
                 print("Sword picked up!")
 
         elif action == 6:
-            reward += 0.2
+            reward -= 5
 
         for m in self.monsters:
             my, mx = m["pos"]
@@ -109,7 +127,7 @@ class MonsterHuntEnv(gym.Env):
             if abs(my - ay) + abs(mx - ax) == 1:
                 self.agent_health -= 1
                 print(f"Monster attacks! Agent loses 1 HP ({self.agent_health} left).")
-                reward -= 30
+                reward -= 50
 
         # Обновление сетки
         self.grid = np.zeros((self.grid_size, self.grid_size), dtype=int)
